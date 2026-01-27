@@ -4,5 +4,5 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/WordAtWork/', // Replace with your actual repo name
+  base: '/wordatwork/', // Match exact repo name (case-sensitive)
 })
