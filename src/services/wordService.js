@@ -5,14 +5,18 @@ import { WORD_TOPICS } from '../config/wordTopics';
 // Fetch workplace vocabulary words dynamically from Datamuse API
 const fetchWorkplaceVocabulary = async () => {
   try {
+    console.log('Fetching workplace vocabulary from Datamuse API...');
     const allWords = [];
     
     for (const { topic, category } of WORD_TOPICS) {
       // Fetch words related to the topic from Datamuse API
-      const response = await fetch(getDatamuseUrl(topic));
+      const url = getDatamuseUrl(topic);
+      console.log(`Fetching words for topic "${topic}" (${category}):`, url);
+      const response = await fetch(url);
       
       if (response.ok) {
         const words = await response.json();
+        console.log(`Got ${words.length} words for topic "${topic}"`);
         // Filter out multi-word phrases (only keep single words)
         words.forEach(w => {
           if (!w.word.includes(' ') && !w.word.includes('-')) {
@@ -29,17 +33,23 @@ const fetchWorkplaceVocabulary = async () => {
             allWords.push({ word: w.word, category, difficulty });
           }
         });
+      } else {
+        console.error(`Failed to fetch words for topic "${topic}": ${response.status}`);
       }
     }
     
+    console.log(`Total words fetched: ${allWords.length}`);
+    
     // If API fails or returns no words, return fallback list
     if (allWords.length === 0) {
+      console.warn('No words fetched from API, using fallback list');
       return getFallbackWordsList();
     }
     
     return allWords;
   } catch (error) {
     console.error('Error fetching vocabulary from Datamuse:', error);
+    console.warn('Using fallback words list');
     return getFallbackWordsList();
   }
 };
@@ -153,17 +163,34 @@ const generateWorkplaceExamples = (word, definition, partOfSpeech, apiExamples =
 // Fetch word definition from Free Dictionary API
 export const fetchWordDefinition = async (word) => {
   try {
-    const response = await fetch(getFreeDictionaryUrl(word));
+    console.log('Fetching definition for word:', word);
+    const url = getFreeDictionaryUrl(word);
+    console.log('API URL:', url);
+    
+    const response = await fetch(url);
     
     if (!response.ok) {
-      throw new Error('Word not found');
+      console.error(`API returned ${response.status} for word:`, word);
+      throw new Error(`Word not found: ${response.status}`);
     }
     
     const data = await response.json();
+    console.log('API response data:', data);
     const wordData = data[0];
+    
+    if (!wordData || !wordData.meanings || wordData.meanings.length === 0) {
+      console.error('Invalid word data structure:', wordData);
+      throw new Error('Invalid word data received from API');
+    }
     
     // Get first meaning
     const firstMeaning = wordData.meanings[0];
+    
+    if (!firstMeaning.definitions || firstMeaning.definitions.length === 0) {
+      console.error('No definitions found for word');
+      throw new Error('No definitions available');
+    }
+    
     const firstDefinition = firstMeaning.definitions[0];
     
     // Collect all examples from API
@@ -184,9 +211,22 @@ export const fetchWordDefinition = async (word) => {
       apiExamples
     );
     
+    // Extract pronunciation, handling various possible structures
+    let pronunciation = '';
+    if (wordData.phonetic) {
+      pronunciation = wordData.phonetic;
+    } else if (wordData.phonetics && wordData.phonetics.length > 0) {
+      // Find the first phonetic with text
+      const phoneticWithText = wordData.phonetics.find(p => p.text);
+      pronunciation = phoneticWithText ? phoneticWithText.text : '';
+    }
+    
+    // Remove slashes from pronunciation if present
+    pronunciation = pronunciation.replace(/^\/|\/$/g, '');
+    
     return {
       word: wordData.word.charAt(0).toUpperCase() + wordData.word.slice(1),
-      pronunciation: wordData.phonetic || wordData.phonetics[0]?.text || '',
+      pronunciation: pronunciation || 'pronunciation not available',
       partOfSpeech: firstMeaning.partOfSpeech,
       meaning: firstDefinition.definition,
       synonyms: firstMeaning.synonyms?.slice(0, 5) || [],
@@ -205,6 +245,11 @@ export const getWordOfTheDay = async () => {
     // Get dynamic word list
     const workplaceWordsList = await getWorkplaceWordsList();
     
+    if (!workplaceWordsList || workplaceWordsList.length === 0) {
+      console.error('No words available in the list');
+      throw new Error('No words available');
+    }
+    
     // Use current date to determine which word to show
     const today = new Date();
     const startOfYear = new Date(today.getFullYear(), 0, 1);
@@ -213,23 +258,40 @@ export const getWordOfTheDay = async () => {
     const wordIndex = dayOfYear % workplaceWordsList.length;
     const wordEntry = workplaceWordsList[wordIndex];
     
-    // Fetch definition from API
-    const wordData = await fetchWordDefinition(wordEntry.word);
+    console.log('Selected word entry:', wordEntry);
     
-    if (!wordData) {
-      throw new Error('Failed to fetch word data');
+    // Try to fetch definition from API, with fallback attempts
+    let wordData = null;
+    let attempts = 0;
+    const maxAttempts = 5;
+    
+    while (!wordData && attempts < maxAttempts) {
+      const currentIndex = (wordIndex + attempts) % workplaceWordsList.length;
+      const currentWordEntry = workplaceWordsList[currentIndex];
+      
+      console.log(`Attempt ${attempts + 1}: Trying word "${currentWordEntry.word}"`);
+      wordData = await fetchWordDefinition(currentWordEntry.word);
+      
+      if (wordData) {
+        console.log('Successfully fetched word data');
+        return {
+          ...wordData,
+          category: currentWordEntry.category,
+          date: today.toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          }),
+        };
+      }
+      
+      attempts++;
     }
     
-    return {
-      ...wordData,
-      category: wordEntry.category,
-      date: today.toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      }),
-    };
+    // If all attempts fail, throw error
+    console.error('Failed to fetch definition after multiple attempts');
+    throw new Error('Failed to fetch word data after multiple attempts');
   } catch (error) {
     console.error('Error getting word of the day:', error);
     throw error;

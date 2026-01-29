@@ -91,11 +91,11 @@ function WordOfTheDay() {
 
   return (
     <Container maxWidth="md">
-      <Box sx={{ my: 4 }}>
+      <Box sx={{ my: { xs: 2, md: 4 } }}>
         <Box 
           sx={{ 
-            mb: 4,
-            p: 3,
+            mb: { xs: 2, md: 4 },
+            p: { xs: 2, sm: 3 },
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             borderRadius: 3,
             color: 'white',
@@ -103,27 +103,39 @@ function WordOfTheDay() {
             boxShadow: '0 10px 30px rgba(102, 126, 234, 0.3)',
           }}
         >
-          <Typography variant="h3" component="h1" fontWeight={700} gutterBottom>
+          <Typography 
+            variant="h3" 
+            component="h1" 
+            fontWeight={700} 
+            gutterBottom
+            sx={{ fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' } }}
+          >
             Word of the Day
           </Typography>
-          <Typography variant="h6" sx={{ opacity: 0.9 }}>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              opacity: 0.9,
+              fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' },
+            }}
+          >
             {wordData.date}
           </Typography>
         </Box>
 
         <Card 
           sx={{ 
-            mt: 3,
+            mt: { xs: 2, md: 3 },
             borderRadius: 3,
             boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
             border: '1px solid rgba(102, 126, 234, 0.1)',
           }}
         >
-          <CardContent sx={{ p: 4 }}>
+          <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
             <Box 
               sx={{ 
-                mb: 4,
-                p: 4,
+                mb: { xs: 2, md: 4 },
+                p: { xs: 2, sm: 3, md: 4 },
                 background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
                 borderRadius: 3,
                 color: 'white',
@@ -131,13 +143,16 @@ function WordOfTheDay() {
                 boxShadow: '0 8px 24px rgba(240, 147, 251, 0.3)',
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, mb: 1 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, mb: 1, flexWrap: 'wrap' }}>
                 <Typography 
                   variant="h2" 
                   component="h2" 
                   sx={{ 
                     fontWeight: 700,
                     textShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                    fontSize: { xs: '2rem', sm: '2.5rem', md: '3.75rem' },
+                    wordBreak: 'break-word',
+                    maxWidth: '100%',
                   }}
                 >
                   {wordData.word}
@@ -150,10 +165,19 @@ function WordOfTheDay() {
                   }}
                   size="large"
                 >
-                  <VolumeUpIcon sx={{ fontSize: 36 }} />
+                  <VolumeUpIcon sx={{ fontSize: { xs: 28, md: 36 } }} />
                 </IconButton>
               </Box>
-              <Typography variant="h6" gutterBottom sx={{ opacity: 0.95, fontStyle: 'italic' }}>
+              <Typography 
+                variant="h6" 
+                gutterBottom 
+                sx={{ 
+                  opacity: 0.95, 
+                  fontStyle: 'italic',
+                  fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' },
+                  wordBreak: 'break-word',
+                }}
+              >
                 /{wordData.pronunciation}/ • {wordData.partOfSpeech}
               </Typography>
               <Chip
@@ -172,22 +196,34 @@ function WordOfTheDay() {
 
             <Divider sx={{ my: 2 }} />
 
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
+            <Box sx={{ mb: { xs: 2, md: 3 } }}>
+              <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1rem', md: '1.25rem' } }}>
                 Meaning
               </Typography>
-              <Typography variant="body1" paragraph>
+              <Typography 
+                variant="body1" 
+                paragraph
+                sx={{ 
+                  fontSize: { xs: '0.875rem', md: '1rem' },
+                  wordBreak: 'break-word',
+                }}
+              >
                 {wordData.meaning}
               </Typography>
             </Box>
 
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
+            <Box sx={{ mb: { xs: 2, md: 3 } }}>
+              <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1rem', md: '1.25rem' } }}>
                 Synonyms
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                 {wordData.synonyms.map((synonym, index) => (
-                  <Chip key={index} label={synonym} variant="outlined" />
+                  <Chip 
+                    key={index} 
+                    label={synonym} 
+                    variant="outlined"
+                    sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}
+                  />
                 ))}
               </Box>
             </Box>
@@ -195,17 +231,27 @@ function WordOfTheDay() {
             <Divider sx={{ my: 2 }} />
 
             <Box>
-              <Typography variant="h5" gutterBottom fontWeight={600} color="primary">
+              <Typography 
+                variant="h5" 
+                gutterBottom 
+                fontWeight={600} 
+                color="primary"
+                sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}
+              >
                 Usage Examples
               </Typography>
               <Tabs 
                 value={tabValue} 
                 onChange={handleTabChange} 
+                variant="scrollable"
+                scrollButtons="auto"
                 sx={{ 
-                  mb: 3,
+                  mb: { xs: 2, md: 3 },
                   '& .MuiTab-root': {
                     fontWeight: 600,
-                    fontSize: '1rem',
+                    fontSize: { xs: '0.875rem', md: '1rem' },
+                    minWidth: { xs: 'auto', sm: 90 },
+                    px: { xs: 2, sm: 3 },
                   },
                   '& .Mui-selected': {
                     color: '#667eea',
@@ -222,14 +268,24 @@ function WordOfTheDay() {
               </Tabs>
               <Paper 
                 sx={{ 
-                  p: 4, 
+                  p: { xs: 2, sm: 3, md: 4 }, 
                   background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
                   borderRadius: 2,
                   boxShadow: '0 4px 16px rgba(252, 182, 159, 0.3)',
                   border: '2px solid rgba(255, 236, 210, 0.5)',
                 }}
               >
-                <Typography variant="h6" sx={{ fontStyle: 'italic', color: 'text.primary', lineHeight: 1.8 }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontStyle: 'italic', 
+                    color: 'text.primary', 
+                    lineHeight: 1.8,
+                    fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' },
+                    wordBreak: 'break-word',
+                    overflowWrap: 'break-word',
+                  }}
+                >
                   "{examples[tabValue].content}"
                 </Typography>
               </Paper>
