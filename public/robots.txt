@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://a-govindaraj.github.io/lexigrove/sitemap.xml

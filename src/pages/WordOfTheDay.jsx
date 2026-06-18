@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
@@ -14,10 +15,39 @@ import {
   IconButton,
 } from '@mui/material';
 import VolumeUpRoundedIcon from '@mui/icons-material/VolumeUpRounded';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUncheckedRounded';
 import { getDailyWordsForAllTracks, getFormattedDate } from '../services/wordService';
+import { recordVisit, isLearned, toggleLearned } from '../services/progressService';
 import TrackIcon from '../components/TrackIcon';
 import WordRelations from '../components/WordRelations';
-import { BRAND_GRADIENT } from '../config/brand';
+
+// A toggle that marks a word as learned (persisted in localStorage).
+function LearnedToggle({ track, word, size = 'medium' }) {
+  const [learned, setLearned] = useState(() => isLearned(track.id, word.word));
+  const handleToggle = () => {
+    const next = toggleLearned({
+      trackId: track.id,
+      trackName: track.name,
+      word: word.word,
+      partOfSpeech: word.partOfSpeech,
+      meaning: word.meaning,
+    });
+    setLearned(next);
+  };
+  return (
+    <Button
+      onClick={handleToggle}
+      size={size}
+      variant={learned ? 'contained' : 'outlined'}
+      color={learned ? 'success' : 'primary'}
+      startIcon={learned ? <CheckCircleRoundedIcon /> : <RadioButtonUncheckedRoundedIcon />}
+      sx={{ textTransform: 'none' }}
+    >
+      {learned ? 'Learned' : 'Mark as learned'}
+    </Button>
+  );
+}
 
 const pronounce = (word) => {
   if ('speechSynthesis' in window) {
@@ -75,6 +105,9 @@ function FeaturedWord({ track, word }) {
             {word.meaning}
           </Typography>
           <WordRelations synonyms={word.synonyms} antonyms={word.antonyms} direction="column" />
+          <Box sx={{ mt: 3 }}>
+            <LearnedToggle track={track} word={word} />
+          </Box>
         </Grid>
         {/* Right: examples */}
         <Grid item xs={12} md={7} sx={{ p: { xs: 3, md: 4 } }}>
@@ -132,15 +165,21 @@ function CompactWord({ track, word }) {
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1, minHeight: 40 }}>
           {word.meaning}
         </Typography>
-        <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
+        <Typography variant="body2" sx={{ fontStyle: 'italic', mb: 1.5 }}>
           “{word.sentence}”
         </Typography>
+        <LearnedToggle track={track} word={word} size="small" />
       </CardContent>
     </Card>
   );
 }
 
 function WordOfTheDay() {
+  // Seeing today's word counts as a daily visit — drives the streak.
+  useEffect(() => {
+    recordVisit();
+  }, []);
+
   const trackWords = getDailyWordsForAllTracks();
   const featured = trackWords.find((t) => t.track.primary) || trackWords[0];
   const rest = trackWords.filter((t) => t.track.id !== featured.track.id);

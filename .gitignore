@@ -16,6 +16,9 @@ dist-ssr
 .env.local
 .env.*.local
 
+# Real subscriber list — never commit real emails (sample file is fine)
+scripts/subscribers.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

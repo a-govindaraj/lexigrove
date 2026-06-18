@@ -8,196 +8,117 @@ import {
   TextField,
   Typography,
   Grid,
-  Paper,
   Snackbar,
   Alert,
   InputAdornment,
+  MenuItem,
+  CircularProgress,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import EmailIcon from '@mui/icons-material/Email';
-import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
+import { getAllTracks } from '../services/wordService';
+import { SUBSCRIBE_ENDPOINT, isSubscribeConfigured } from '../config/integrations';
+
+const BENEFITS = [
+  'A new word for your track, every day',
+  'Meanings, synonyms, antonyms & usage in context',
+  'Just five minutes — a habit that compounds',
+  'Build a streak and track what you’ve learned',
+];
 
 function Subscribe() {
+  const tracks = getAllTracks();
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [emailSubscribed, setEmailSubscribed] = useState(false);
-  const [whatsappSubscribed, setWhatsappSubscribed] = useState(false);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [trackId, setTrackId] = useState(tracks[0]?.id || '');
+  const [status, setStatus] = useState('idle'); // idle | loading | success
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  const handleEmailSubscribe = (e) => {
+  const notify = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
+
+  const handleSubscribe = async (e) => {
     e.preventDefault();
-    if (!email || !email.includes('@')) {
-      setSnackbarMessage('Please enter a valid email address');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      notify('Please enter a valid email address', 'error');
+      return;
+    }
+    if (!isSubscribeConfigured()) {
+      notify('Email sign-up is launching soon — check back shortly!', 'info');
       return;
     }
 
-    // In production, this would send to backend API
-    console.log('Email subscription:', email);
-    setEmailSubscribed(true);
-    setSnackbarMessage('Successfully subscribed via Email! 🎉');
-    setSnackbarSeverity('success');
-    setSnackbarOpen(true);
-    setEmail('');
-  };
-
-  const handleWhatsAppSubscribe = (e) => {
-    e.preventDefault();
-    if (!phone || phone.length < 10) {
-      setSnackbarMessage('Please enter a valid phone number');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-      return;
+    setStatus('loading');
+    try {
+      const trackName = tracks.find((t) => t.id === trackId)?.name || trackId;
+      // text/plain keeps this a "simple" request so the browser skips the CORS
+      // preflight that Google Apps Script can't respond to. The script reads the
+      // raw body and JSON.parses it.
+      const res = await fetch(SUBSCRIBE_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ email, track: trackId, trackName, source: 'lexigrove-web' }),
+      });
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+      setStatus('success');
+      notify('You’re on the list! 🎉 Your daily words are on the way soon.', 'success');
+      setEmail('');
+    } catch {
+      setStatus('idle');
+      notify('Something went wrong. Please try again in a moment.', 'error');
     }
-
-    // In production, this would send to backend API
-    console.log('WhatsApp subscription:', phone);
-    setWhatsappSubscribed(true);
-    setSnackbarMessage('Successfully subscribed via WhatsApp! 🎉');
-    setSnackbarSeverity('success');
-    setSnackbarOpen(true);
-    setPhone('');
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbarOpen(false);
   };
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="md">
       <Box sx={{ my: 4 }}>
-        {/* Header Section */}
-        <Box 
-          sx={{ 
-            mb: 6,
-            p: 5,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            borderRadius: 3,
-            color: 'white',
-            textAlign: 'center',
-            boxShadow: '0 10px 30px rgba(102, 126, 234, 0.3)',
-          }}
-        >
-          <NotificationsActiveIcon sx={{ fontSize: 64, mb: 2 }} />
-          <Typography variant="h3" component="h1" fontWeight={700} gutterBottom>
-            Subscribe to Lexigrove
-          </Typography>
-          <Typography variant="h6" sx={{ opacity: 0.95, maxWidth: 800, mx: 'auto' }}>
-            Get your daily word delivered straight to your inbox or WhatsApp. 
-            Build your professional vocabulary one word at a time!
-          </Typography>
-        </Box>
+        <Grid container spacing={4} alignItems="center">
+          {/* Left: pitch + benefits */}
+          <Grid item xs={12} md={6}>
+            <Typography variant="h4" component="h1" fontWeight={700} color="primary" gutterBottom>
+              Get a word a day
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+              Pick your track and we’ll deliver one carefully chosen word to your inbox each morning.
+            </Typography>
+            <List dense disablePadding>
+              {BENEFITS.map((b) => (
+                <ListItem key={b} disableGutters sx={{ py: 0.25 }}>
+                  <ListItemIcon sx={{ minWidth: 32 }}>
+                    <CheckCircleIcon fontSize="small" color="primary" />
+                  </ListItemIcon>
+                  <ListItemText primary={b} primaryTypographyProps={{ variant: 'body2' }} />
+                </ListItem>
+              ))}
+            </List>
+          </Grid>
 
-        {/* Benefits Section */}
-        <Box sx={{ mb: 6 }}>
-          <Typography variant="h5" fontWeight={700} align="center" color="primary" mb={4}>
-            What You'll Get
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'nowrap' }}>
-            {[
-              { title: 'Daily Word', desc: 'A new professional word every day' },
-              { title: 'Context Examples', desc: 'Real workplace usage in emails, meetings, and presentations' },
-              { title: 'Quick Learning', desc: 'Just 5 minutes a day to expand your vocabulary' },
-              { title: 'Progress Tracking', desc: 'Monitor your learning journey and achievements' },
-            ].map((benefit, index) => (
-              <Paper
-                key={index}
-                elevation={0}
-                sx={{
-                  p: 3,
-                  textAlign: 'center',
-                  width: 250,
-                  height: 200,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  background: 'linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%)',
-                  border: '1px solid rgba(102, 126, 234, 0.1)',
-                  borderRadius: 2,
-                  flexShrink: 0,
-                }}
-              >
-                <CheckCircleIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
-                <Typography variant="h6" fontWeight={700} gutterBottom sx={{ fontSize: '1rem' }}>
-                  {benefit.title}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
-                  {benefit.desc}
-                </Typography>
-              </Paper>
-            ))}
-          </Box>
-        </Box>
-
-        {/* Subscription Cards */}
-        <Grid container spacing={4} sx={{ justifyContent: 'center' }}>
-          {/* Email Subscription */}
-          <Grid item xs={12} md={6} sx={{ maxWidth: 600 }}>
-            <Card
-              sx={{
-                height: '100%',
-                borderRadius: 3,
-                boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                border: emailSubscribed ? '3px solid #4caf50' : '2px solid #667eea',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-8px)',
-                  boxShadow: '0 12px 40px rgba(102, 126, 234, 0.3)',
-                },
-              }}
-            >
-              <CardContent sx={{ p: 4 }}>
-                <Box
-                  sx={{
-                    width: 80,
-                    height: 80,
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mx: 'auto',
-                    mb: 3,
-                    boxShadow: '0 8px 24px rgba(102, 126, 234, 0.4)',
-                  }}
-                >
-                  <EmailIcon sx={{ fontSize: 40, color: 'white' }} />
-                </Box>
-
-                <Typography variant="h4" fontWeight={700} align="center" gutterBottom color="primary">
-                  Email Subscription <br />(In-progress)
-                </Typography>
-                <Typography variant="body1" color="text.secondary" align="center" paragraph>
-                  Receive daily words directly in your inbox. Perfect for starting your morning with a vocabulary boost!
-                </Typography>
-
-                {emailSubscribed ? (
-                  <Box
-                    sx={{
-                      p: 3,
-                      bgcolor: '#e8f5e9',
-                      borderRadius: 2,
-                      textAlign: 'center',
-                    }}
-                  >
-                    <CheckCircleIcon sx={{ fontSize: 48, color: '#4caf50', mb: 1 }} />
-                    <Typography variant="h6" fontWeight={700} color="#4caf50">
-                      You're Subscribed!
+          {/* Right: form */}
+          <Grid item xs={12} md={6}>
+            <Card sx={{ borderRadius: '12px', border: '1px solid', borderColor: 'divider' }}>
+              <CardContent sx={{ p: 3 }}>
+                {status === 'success' ? (
+                  <Box sx={{ py: 2, textAlign: 'center' }}>
+                    <CheckCircleIcon sx={{ fontSize: 44, color: 'success.main', mb: 1 }} />
+                    <Typography variant="h6" fontWeight={700} color="success.main">
+                      You’re on the list!
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Check your email for confirmation
+                      We’ll start sending your daily word soon.
                     </Typography>
                   </Box>
                 ) : (
-                  <form onSubmit={handleEmailSubscribe}>
+                  <form onSubmit={handleSubscribe}>
+                    <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>
+                      Subscribe free
+                    </Typography>
                     <TextField
                       fullWidth
+                      size="small"
                       type="email"
-                      label="Email Address"
+                      label="Email address"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@example.com"
@@ -205,56 +126,62 @@ function Subscribe() {
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
-                            <EmailIcon color="primary" />
+                            <EmailIcon color="primary" fontSize="small" />
                           </InputAdornment>
                         ),
                       }}
                       sx={{ mb: 2 }}
                     />
+                    <TextField
+                      select
+                      fullWidth
+                      size="small"
+                      label="Your track"
+                      value={trackId}
+                      onChange={(e) => setTrackId(e.target.value)}
+                      sx={{ mb: 2 }}
+                    >
+                      {tracks.map((t) => (
+                        <MenuItem key={t.id} value={t.id}>
+                          {t.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
                     <Button
                       type="submit"
                       fullWidth
                       variant="contained"
-                      size="large"
-                      sx={{
-                        py: 1.5,
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        fontWeight: 700,
-                        fontSize: '1.1rem',
-                        '&:hover': {
-                          background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
-                        },
-                      }}
+                      disabled={status === 'loading'}
+                      startIcon={status === 'loading' ? <CircularProgress size={18} color="inherit" /> : null}
+                      sx={{ fontWeight: 700 }}
                     >
-                      Subscribe via Email
+                      {status === 'loading' ? 'Subscribing…' : 'Subscribe'}
                     </Button>
+                    <Typography variant="caption" color="text.secondary" align="center" display="block" sx={{ mt: 1.5 }}>
+                      {isSubscribeConfigured()
+                        ? '🔒 No spam. Unsubscribe anytime.'
+                        : 'Email delivery is launching soon.'}
+                    </Typography>
                   </form>
                 )}
               </CardContent>
             </Card>
           </Grid>
-
-          
         </Grid>
-
-        {/* Privacy Notice */}
-        <Box sx={{ mt: 6, p: 3, bgcolor: '#f5f5f5', borderRadius: 2, textAlign: 'center' }}>
-          <Typography variant="body2" color="text.secondary">
-            🔒 Your privacy is important to us. We'll only send you daily words and never share your information with third parties.
-            You can unsubscribe anytime.
-          </Typography>
-        </Box>
       </Box>
 
-      {/* Success Snackbar */}
       <Snackbar
-        open={snackbarOpen}
+        open={snackbar.open}
         autoHideDuration={4000}
-        onClose={handleCloseSnackbar}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: '100%', fontSize: '1rem' }}>
-          {snackbarMessage}
+        <Alert
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
         </Alert>
       </Snackbar>
     </Container>

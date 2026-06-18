@@ -135,6 +135,19 @@ export const getTrackWords = (trackId) => {
   }));
 };
 
+// Every word across every track, flattened — used by the quiz to build questions
+// and distractors from the full vocabulary.
+export const getAllWords = () =>
+  TRACKS.flatMap((track) =>
+    track.words.map((entry) => ({
+      word: capitalise(entry.word),
+      meaning: entry.meaning,
+      partOfSpeech: entry.partOfSpeech,
+      trackId: track.id,
+      trackName: track.name,
+    }))
+  );
+
 // Full detail for one word in a track (for the dialog).
 export const getWordDetail = (trackId, word) => {
   const track = getTrackById(trackId);
@@ -150,6 +163,7 @@ export default {
   getWordOfTheDay,
   getDailyWordsForAllTracks,
   getTrackWords,
+  getAllWords,
   getWordDetail,
   getFormattedDate,
 };

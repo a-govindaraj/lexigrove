@@ -21,6 +21,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
 import TodayIcon from '@mui/icons-material/Today';
 import CategoryIcon from '@mui/icons-material/Category';
+import QuizIcon from '@mui/icons-material/Quiz';
 import HistoryIcon from '@mui/icons-material/History';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import Logo from './Logo';
@@ -30,8 +31,9 @@ const menuItems = [
   { text: 'Home', icon: <HomeIcon />, path: '/' },
   { text: 'Word of the Day', icon: <TodayIcon />, path: '/word-of-the-day' },
   { text: 'Browse Words', icon: <CategoryIcon />, path: '/categories' },
-  // { text: 'Subscribe', icon: <NotificationsActiveIcon />, path: '/subscribe' },
-  //   { text: 'History', icon: <HistoryIcon />, path: '/history' },
+  { text: 'Quiz', icon: <QuizIcon />, path: '/quiz' },
+  { text: 'My Progress', icon: <HistoryIcon />, path: '/history' },
+  { text: 'Subscribe', icon: <NotificationsActiveIcon />, path: '/subscribe' },
 ];
 
 function Layout({ children }) {
