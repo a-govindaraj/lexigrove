@@ -1,61 +1,44 @@
 import { SvgIcon } from '@mui/material';
 
+// Lexigrove mark: a sprout rising from an open book, set in a rounded tile so it
+// stays crisp and visible on both the green app bar and light backgrounds.
 function Logo({ sx, ...props }) {
   return (
-    <SvgIcon sx={sx} {...props} viewBox="0 0 100 100">
-      {/* Speech bubble outline - Purple gradient */}
+    <SvgIcon sx={sx} {...props} viewBox="0 0 64 64">
       <defs>
-        <linearGradient id="bubbleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style={{ stopColor: '#667eea', stopOpacity: 1 }} />
-          <stop offset="100%" style={{ stopColor: '#764ba2', stopOpacity: 1 }} />
-        </linearGradient>
-        <linearGradient id="bookGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style={{ stopColor: '#f093fb', stopOpacity: 1 }} />
-          <stop offset="100%" style={{ stopColor: '#f5576c', stopOpacity: 1 }} />
-        </linearGradient>
-        <linearGradient id="briefcaseGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style={{ stopColor: '#4facfe', stopOpacity: 1 }} />
-          <stop offset="100%" style={{ stopColor: '#00f2fe', stopOpacity: 1 }} />
+        <linearGradient id="lgLeaf" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#5FA777" />
+          <stop offset="100%" stopColor="#2E6B4F" />
         </linearGradient>
       </defs>
-      
-      {/* Speech bubble outer */}
+
+      {/* App tile */}
+      <rect x="3" y="3" width="58" height="58" rx="16" fill="#FFFFFF" />
+      <rect x="3" y="3" width="58" height="58" rx="16" fill="none" stroke="rgba(31,77,56,0.12)" strokeWidth="1.5" />
+
+      {/* Stem */}
+      <path d="M32 46 L32 27" stroke="#2E6B4F" strokeWidth="3.2" strokeLinecap="round" fill="none" />
+
+      {/* Left leaf */}
+      <path d="M32 35 C25 35 19.5 31 18 24 C25.5 23 32 27 32 35 Z" fill="url(#lgLeaf)" />
+      {/* Right leaf (the sprout tip) */}
+      <path d="M32 30 C32 22 38 14.5 46.5 13 C48 22 42 30 32 30 Z" fill="url(#lgLeaf)" />
+
+      {/* Open book */}
       <path
-        d="M 20 25 Q 20 15 30 15 L 70 15 Q 80 15 80 25 L 80 55 Q 80 65 70 65 L 55 65 L 50 75 L 45 65 L 30 65 Q 20 65 20 55 Z"
-        fill="url(#bubbleGradient)"
+        d="M14 44 C21 40 28 40 32 44 C36 40 43 40 50 44 L50 51 C43 47 36 47 32 51 C28 47 21 47 14 51 Z"
+        fill="#1F4D38"
       />
-      
-      {/* Inner speech bubble (white background) */}
-      <path
-        d="M 25 28 Q 25 20 32 20 L 68 20 Q 75 20 75 28 L 75 52 Q 75 60 68 60 L 54 60 L 50 68 L 46 60 L 32 60 Q 25 60 25 52 Z"
-        fill="white"
-      />
-      
-      {/* Stylized "W" - Purple - Bold and clear */}
-      <text
-        x="50"
-        y="48"
-        fontSize="28"
-        fontWeight="900"
-        fontFamily="Arial, sans-serif"
-        fill="#667eea"
-        textAnchor="middle"
-        dominantBaseline="middle"
-      >
-        W
-      </text>
-      
-      {/* Book - Pink/Red gradient */}
-      <rect x="62" y="70" width="28" height="20" rx="2" fill="url(#bookGradient)" />
-      <rect x="64" y="72" width="24" height="16" rx="1" fill="white" />
-      <line x1="67" y1="76" x2="85" y2="76" stroke="#f5576c" strokeWidth="1.5" opacity="0.7" />
-      <line x1="67" y1="80" x2="85" y2="80" stroke="#f5576c" strokeWidth="1.5" opacity="0.7" />
-      <line x1="67" y1="84" x2="80" y2="84" stroke="#f5576c" strokeWidth="1.5" opacity="0.7" />
-      
-      {/* Briefcase - Blue gradient */}
-      <rect x="10" y="75" width="22" height="15" rx="2" fill="url(#briefcaseGradient)" />
-      <path d="M 15 75 L 15 72 Q 15 70 17 70 L 25 70 Q 27 70 27 72 L 27 75" fill="#4facfe" />
-      <rect x="12" y="82" width="18" height="1.5" rx="0.5" fill="white" opacity="0.6" />
+      {/* Spine + page hints */}
+      <path d="M32 44 L32 51" stroke="#FFFFFF" strokeWidth="1.6" strokeLinecap="round" />
+
+      {/* Sparkles shining off the leaves */}
+      <path d="M47 7.5 L47.9 11.1 L51.5 12 L47.9 12.9 L47 16.5 L46.1 12.9 L42.5 12 L46.1 11.1 Z" fill="#F4B740">
+        <animate attributeName="opacity" values="0.25;1;0.25" dur="2.4s" repeatCount="indefinite" />
+      </path>
+      <path d="M53 20.4 L53.5 22.5 L55.6 23 L53.5 23.5 L53 25.6 L52.5 23.5 L50.4 23 L52.5 22.5 Z" fill="#F4B740">
+        <animate attributeName="opacity" values="1;0.2;1" dur="2.4s" begin="0.6s" repeatCount="indefinite" />
+      </path>
     </SvgIcon>
   );
 }

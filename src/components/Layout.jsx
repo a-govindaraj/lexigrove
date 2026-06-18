@@ -24,11 +24,12 @@ import CategoryIcon from '@mui/icons-material/Category';
 import HistoryIcon from '@mui/icons-material/History';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import Logo from './Logo';
+import { APP_NAME, BRAND_GRADIENT } from '../config/brand';
 
 const menuItems = [
   { text: 'Home', icon: <HomeIcon />, path: '/' },
   { text: 'Word of the Day', icon: <TodayIcon />, path: '/word-of-the-day' },
-  { text: 'Categories', icon: <CategoryIcon />, path: '/categories' },
+  { text: 'Browse Words', icon: <CategoryIcon />, path: '/categories' },
   // { text: 'Subscribe', icon: <NotificationsActiveIcon />, path: '/subscribe' },
   //   { text: 'History', icon: <HistoryIcon />, path: '/history' },
 ];
@@ -54,12 +55,12 @@ function Layout({ children }) {
       <Box
         sx={{
           p: 2,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: BRAND_GRADIENT,
           color: 'white',
         }}
       >
         <Typography variant="h6" fontWeight={700}>
-          WordAtWork
+          {APP_NAME}
         </Typography>
       </Box>
       <List sx={{ pt: 2 }}>
@@ -72,7 +73,7 @@ function Layout({ children }) {
                 borderRadius: 2,
                 mb: 0.5,
                 '&.Mui-selected': {
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  background: BRAND_GRADIENT,
                   color: 'white',
                 },
               }}
@@ -98,15 +99,15 @@ function Layout({ children }) {
       <AppBar
         position="fixed"
         sx={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          boxShadow: '0 4px 20px rgba(102, 126, 234, 0.3)',
+          background: BRAND_GRADIENT,
+          boxShadow: '0 4px 20px rgba(31, 77, 56, 0.25)',
         }}
       >
         <Toolbar>
           <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
             <Logo sx={{ fontSize: 56, mr: 1.5 }} />
             <Typography variant="h6" component="div" fontWeight={700} sx={{ mr: 4 }}>
-              WordAtWork
+              {APP_NAME}
             </Typography>
           </Box>
 
@@ -184,7 +185,7 @@ function Layout({ children }) {
           py: 3,
           px: 2,
           mt: 'auto',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: BRAND_GRADIENT,
           color: 'white',
           textAlign: 'center',
         }}
@@ -232,7 +233,7 @@ function Layout({ children }) {
           </Button>
         </Box>
         <Typography variant="body2" sx={{ opacity: 0.9 }}>
-          © {new Date().getFullYear()} WordAtWork. All rights reserved.
+          © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
         </Typography>
       </Box>
     </Box>

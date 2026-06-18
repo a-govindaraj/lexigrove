@@ -84,7 +84,7 @@ function Subscribe() {
         >
           <NotificationsActiveIcon sx={{ fontSize: 64, mb: 2 }} />
           <Typography variant="h3" component="h1" fontWeight={700} gutterBottom>
-            Subscribe to WordAtWork
+            Subscribe to Lexigrove
           </Typography>
           <Typography variant="h6" sx={{ opacity: 0.95, maxWidth: 800, mx: 'auto' }}>
             Get your daily word delivered straight to your inbox or WhatsApp. 

@@ -16,7 +16,7 @@ function PrivacyPolicy() {
             1. Information We Collect
           </Typography>
           <Typography variant="body1" paragraph>
-            WordAtWork is designed with privacy in mind. Currently, we collect minimal information:
+            Lexigrove is designed with privacy in mind. Currently, we collect minimal information:
           </Typography>
           <Typography variant="body1" component="div" paragraph>
             • <strong>Usage Data:</strong> We may collect information about how you interact with our application, such as pages visited and features used.

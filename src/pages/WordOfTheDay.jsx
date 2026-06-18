@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box,
   Card,
@@ -6,292 +6,170 @@ import {
   Chip,
   Container,
   Divider,
+  Grid,
   Paper,
   Tab,
   Tabs,
   Typography,
   IconButton,
-  CircularProgress,
 } from '@mui/material';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
-import { getWordOfTheDay } from '../services/wordService';
+import VolumeUpRoundedIcon from '@mui/icons-material/VolumeUpRounded';
+import { getDailyWordsForAllTracks, getFormattedDate } from '../services/wordService';
+import TrackIcon from '../components/TrackIcon';
+import WordRelations from '../components/WordRelations';
+import { BRAND_GRADIENT } from '../config/brand';
 
-function WordOfTheDay() {
-  const [tabValue, setTabValue] = useState(0);
-  const [wordData, setWordData] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  // Fetch word of the day on component mount
-  useEffect(() => {
-    const fetchWord = async () => {
-      try {
-        setLoading(true);
-        const word = await getWordOfTheDay();
-        setWordData(word);
-      } catch (error) {
-        console.error('Error loading word:', error);
-        setWordData(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWord();
-  }, []);
-
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
-  };
-
-  const handlePronounce = (word) => {
-    if ('speechSynthesis' in window) {
-      // Cancel any ongoing speech
-      window.speechSynthesis.cancel();
-      
-      // Create speech utterance
-      const utterance = new SpeechSynthesisUtterance(word);
-      utterance.rate = 0.8; // Slightly slower for clarity
-      utterance.pitch = 1;
-      utterance.volume = 1;
-      
-      // Speak the word
-      window.speechSynthesis.speak(utterance);
-    } else {
-      alert('Speech synthesis not supported in your browser');
-    }
-  };
-
-  if (loading) {
-    return (
-      <Container maxWidth="md">
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-          <CircularProgress size={60} />
-        </Box>
-      </Container>
-    );
+const pronounce = (word) => {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(word);
+    u.rate = 0.8;
+    window.speechSynthesis.speak(u);
   }
+};
 
-  if (!wordData) {
-    return (
-      <Container maxWidth="md">
-        <Box sx={{ my: 4, textAlign: 'center' }}>
-          <Typography variant="h5" color="error">
-            Unable to load word. Please try again later.
-          </Typography>
-        </Box>
-      </Container>
-    );
+const getTabs = (word) => {
+  if (word.exampleFormat === 'workplace') {
+    return [
+      { label: 'Email', content: word.examples.email },
+      { label: 'Chat', content: word.examples.chat },
+      { label: 'Speaking', content: word.examples.speaking },
+    ];
   }
-
-  const examples = [
-    { label: 'Email', content: wordData.examples.email },
-    { label: 'Chat', content: wordData.examples.chat },
-    { label: 'Speaking', content: wordData.examples.speaking },
+  return [
+    { label: 'In a Sentence', content: word.examples.sentence },
+    { label: 'Synonyms', content: word.examples.synonyms || '—' },
+    { label: 'Antonyms', content: word.examples.antonyms || '—' },
   ];
+};
+
+// Large horizontal hero card for the lead (11+) word.
+function FeaturedWord({ track, word }) {
+  const [tab, setTab] = useState(0);
+  if (!word) return null;
+  const tabs = getTabs(word);
 
   return (
-    <Container maxWidth="md">
-      <Box sx={{ my: { xs: 2, md: 4 } }}>
-        <Box 
-          sx={{ 
-            mb: { xs: 2, md: 4 },
-            p: { xs: 2, sm: 3 },
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            borderRadius: 3,
-            color: 'white',
-            textAlign: 'center',
-            boxShadow: '0 10px 30px rgba(102, 126, 234, 0.3)',
-          }}
-        >
-          <Typography 
-            variant="h3" 
-            component="h1" 
-            fontWeight={700} 
-            gutterBottom
-            sx={{ fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' } }}
-          >
-            Word of the Day
+    <Card sx={{ overflow: 'hidden', boxShadow: 6 }}>
+      <Box sx={{ px: 3, py: 1.5, background: track.color, color: 'white', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <TrackIcon name={track.icon} sx={{ fontSize: 26 }} />
+        <Typography variant="subtitle1" fontWeight={700}>
+          Today's 11+ word
+        </Typography>
+      </Box>
+      <Grid container>
+        {/* Left: the word */}
+        <Grid item xs={12} md={5} sx={{ p: { xs: 3, md: 4 }, borderRight: { md: '1px solid rgba(0,0,0,0.06)' } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Typography variant="h2" sx={{ color: track.color, fontSize: { xs: '2.4rem', md: '3rem' }, wordBreak: 'break-word' }}>
+              {word.word}
+            </Typography>
+            <IconButton onClick={() => pronounce(word.word)} size="small" aria-label="pronounce">
+              <VolumeUpRoundedIcon />
+            </IconButton>
+          </Box>
+          <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary', mb: 1.5 }}>
+            {word.partOfSpeech}
           </Typography>
-          <Typography 
-            variant="h6" 
-            sx={{ 
-              opacity: 0.9,
-              fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' },
+          <Typography variant="h6" sx={{ fontWeight: 400, mb: 2 }}>
+            {word.meaning}
+          </Typography>
+          <WordRelations synonyms={word.synonyms} antonyms={word.antonyms} direction="column" />
+        </Grid>
+        {/* Right: examples */}
+        <Grid item xs={12} md={7} sx={{ p: { xs: 3, md: 4 } }}>
+          <Tabs
+            value={tab}
+            onChange={(e, v) => setTab(v)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
+              minHeight: 40,
+              mb: 1.5,
+              '& .MuiTab-root': { minHeight: 40, fontWeight: 600, textTransform: 'none' },
+              '& .Mui-selected': { color: track.color },
+              '& .MuiTabs-indicator': { backgroundColor: track.color },
             }}
           >
-            {wordData.date}
+            {tabs.map((t) => (
+              <Tab key={t.label} label={t.label} />
+            ))}
+          </Tabs>
+          <Paper elevation={0} sx={{ p: 3, bgcolor: `${track.color}0f`, borderRadius: '8px', minHeight: 120, display: 'flex', alignItems: 'center' }}>
+            <Typography variant="h6" sx={{ fontStyle: 'italic', fontWeight: 400, lineHeight: 1.7 }}>
+              {tabs[tab].content}
+            </Typography>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Card>
+  );
+}
+
+// Compact card for the secondary tracks.
+function CompactWord({ track, word }) {
+  if (!word) return null;
+  return (
+    <Card sx={{ height: '100%' }}>
+      <Box sx={{ px: 2, py: 1, background: track.color, color: 'white', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <TrackIcon name={track.icon} sx={{ fontSize: 18 }} />
+        <Typography variant="caption" fontWeight={700} sx={{ flexGrow: 1 }}>
+          {track.name}
+        </Typography>
+        {track.comingSoon && (
+          <Chip label="preview" size="small" sx={{ bgcolor: 'rgba(255,255,255,0.25)', color: 'white', height: 18, fontSize: '0.6rem' }} />
+        )}
+      </Box>
+      <CardContent sx={{ p: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+          <Typography variant="h6" fontWeight={700} sx={{ color: track.color }}>
+            {word.word}
+          </Typography>
+          <Typography variant="caption" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
+            {word.partOfSpeech}
+          </Typography>
+        </Box>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1, minHeight: 40 }}>
+          {word.meaning}
+        </Typography>
+        <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
+          “{word.sentence}”
+        </Typography>
+      </CardContent>
+    </Card>
+  );
+}
+
+function WordOfTheDay() {
+  const trackWords = getDailyWordsForAllTracks();
+  const featured = trackWords.find((t) => t.track.primary) || trackWords[0];
+  const rest = trackWords.filter((t) => t.track.id !== featured.track.id);
+
+  return (
+    <Container maxWidth="lg">
+      <Box sx={{ my: { xs: 2, md: 4 } }}>
+        <Box sx={{ mb: 3, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+          <Typography variant="h3" component="h1">
+            Word of the Day
+          </Typography>
+          <Typography variant="subtitle1" color="text.secondary">
+            {getFormattedDate()}
           </Typography>
         </Box>
 
-        <Card 
-          sx={{ 
-            mt: { xs: 2, md: 3 },
-            borderRadius: 3,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-            border: '1px solid rgba(102, 126, 234, 0.1)',
-          }}
-        >
-          <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
-            <Box 
-              sx={{ 
-                mb: { xs: 2, md: 4 },
-                p: { xs: 2, sm: 3, md: 4 },
-                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                borderRadius: 3,
-                color: 'white',
-                textAlign: 'center',
-                boxShadow: '0 8px 24px rgba(240, 147, 251, 0.3)',
-              }}
-            >
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, mb: 1, flexWrap: 'wrap' }}>
-                <Typography 
-                  variant="h2" 
-                  component="h2" 
-                  sx={{ 
-                    fontWeight: 700,
-                    textShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                    fontSize: { xs: '2rem', sm: '2.5rem', md: '3.75rem' },
-                    wordBreak: 'break-word',
-                    maxWidth: '100%',
-                  }}
-                >
-                  {wordData.word}
-                </Typography>
-                <IconButton 
-                  onClick={() => handlePronounce(wordData.word)}
-                  sx={{ 
-                    color: 'white',
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' }
-                  }}
-                  size="large"
-                >
-                  <VolumeUpIcon sx={{ fontSize: { xs: 28, md: 36 } }} />
-                </IconButton>
-              </Box>
-              <Typography 
-                variant="h6" 
-                gutterBottom 
-                sx={{ 
-                  opacity: 0.95, 
-                  fontStyle: 'italic',
-                  fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' },
-                  wordBreak: 'break-word',
-                }}
-              >
-                /{wordData.pronunciation}/ • {wordData.partOfSpeech}
-              </Typography>
-              <Chip
-                label={wordData.category}
-                sx={{ 
-                  mt: 2,
-                  bgcolor: 'white',
-                  color: 'primary.main',
-                  fontWeight: 600,
-                  fontSize: '0.9rem',
-                  px: 2,
-                  py: 2.5,
-                }}
-              />
+        <FeaturedWord track={featured.track} word={featured.word} />
+
+        <Divider sx={{ my: 4 }}>
+          <Chip label="Also growing in the grove" sx={{ bgcolor: 'rgba(46,107,79,0.08)', color: 'primary.dark' }} />
+        </Divider>
+
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
+          {rest.map(({ track, word }) => (
+            <Box key={track.id} sx={{ flex: 1, minWidth: { xs: '100%', sm: 0 } }}>
+              <CompactWord track={track} word={word} />
             </Box>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Box sx={{ mb: { xs: 2, md: 3 } }}>
-              <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1rem', md: '1.25rem' } }}>
-                Meaning
-              </Typography>
-              <Typography 
-                variant="body1" 
-                paragraph
-                sx={{ 
-                  fontSize: { xs: '0.875rem', md: '1rem' },
-                  wordBreak: 'break-word',
-                }}
-              >
-                {wordData.meaning}
-              </Typography>
-            </Box>
-
-            <Box sx={{ mb: { xs: 2, md: 3 } }}>
-              <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1rem', md: '1.25rem' } }}>
-                Synonyms
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                {wordData.synonyms.map((synonym, index) => (
-                  <Chip 
-                    key={index} 
-                    label={synonym} 
-                    variant="outlined"
-                    sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}
-                  />
-                ))}
-              </Box>
-            </Box>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Box>
-              <Typography 
-                variant="h5" 
-                gutterBottom 
-                fontWeight={600} 
-                color="primary"
-                sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}
-              >
-                Usage Examples
-              </Typography>
-              <Tabs 
-                value={tabValue} 
-                onChange={handleTabChange} 
-                variant="scrollable"
-                scrollButtons="auto"
-                sx={{ 
-                  mb: { xs: 2, md: 3 },
-                  '& .MuiTab-root': {
-                    fontWeight: 600,
-                    fontSize: { xs: '0.875rem', md: '1rem' },
-                    minWidth: { xs: 'auto', sm: 90 },
-                    px: { xs: 2, sm: 3 },
-                  },
-                  '& .Mui-selected': {
-                    color: '#667eea',
-                  },
-                  '& .MuiTabs-indicator': {
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    height: 3,
-                  },
-                }}
-              >
-                {examples.map((example, index) => (
-                  <Tab key={index} label={example.label} />
-                ))}
-              </Tabs>
-              <Paper 
-                sx={{ 
-                  p: { xs: 2, sm: 3, md: 4 }, 
-                  background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
-                  borderRadius: 2,
-                  boxShadow: '0 4px 16px rgba(252, 182, 159, 0.3)',
-                  border: '2px solid rgba(255, 236, 210, 0.5)',
-                }}
-              >
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    fontStyle: 'italic', 
-                    color: 'text.primary', 
-                    lineHeight: 1.8,
-                    fontSize: { xs: '0.875rem', sm: '1rem', md: '1.25rem' },
-                    wordBreak: 'break-word',
-                    overflowWrap: 'break-word',
-                  }}
-                >
-                  "{examples[tabValue].content}"
-                </Typography>
-              </Paper>
-            </Box>
-          </CardContent>
-        </Card>
+          ))}
+        </Box>
       </Box>
     </Container>
   );

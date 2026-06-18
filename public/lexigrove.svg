@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="lgLeaf" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5FA777"/>
+      <stop offset="100%" stop-color="#2E6B4F"/>
+    </linearGradient>
+  </defs>
+
+  <!-- App tile -->
+  <rect x="3" y="3" width="58" height="58" rx="16" fill="#FFFFFF"/>
+  <rect x="3" y="3" width="58" height="58" rx="16" fill="none" stroke="rgba(31,77,56,0.12)" stroke-width="1.5"/>
+
+  <!-- Stem -->
+  <path d="M32 46 L32 27" stroke="#2E6B4F" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+
+  <!-- Leaves -->
+  <path d="M32 35 C25 35 19.5 31 18 24 C25.5 23 32 27 32 35 Z" fill="url(#lgLeaf)"/>
+  <path d="M32 30 C32 22 38 14.5 46.5 13 C48 22 42 30 32 30 Z" fill="url(#lgLeaf)"/>
+
+  <!-- Open book -->
+  <path d="M14 44 C21 40 28 40 32 44 C36 40 43 40 50 44 L50 51 C43 47 36 47 32 51 C28 47 21 47 14 51 Z" fill="#1F4D38"/>
+  <path d="M32 44 L32 51" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round"/>
+
+  <!-- Sparkles -->
+  <path d="M47 7.5 L47.9 11.1 L51.5 12 L47.9 12.9 L47 16.5 L46.1 12.9 L42.5 12 L46.1 11.1 Z" fill="#F4B740"/>
+  <path d="M53 20.4 L53.5 22.5 L55.6 23 L53.5 23.5 L53 25.6 L52.5 23.5 L50.4 23 L52.5 22.5 Z" fill="#F4B740"/>
+</svg>

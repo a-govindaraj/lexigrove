@@ -1,357 +1,155 @@
-// Service for fetching word data from Free Dictionary API
-import { getDatamuseUrl, getFreeDictionaryUrl } from '../config/apiConfig';
-import { WORD_TOPICS } from '../config/wordTopics';
+// Track-based vocabulary service.
+//
+// All content is curated in src/config/tracks.js, so the app works instantly and
+// offline — no flaky third-party API calls. Each track supplies its own word list
+// and example format.
 
-// Fetch workplace vocabulary words dynamically from Datamuse API
-const fetchWorkplaceVocabulary = async () => {
-  try {
-    console.log('Fetching workplace vocabulary from Datamuse API...');
-    const allWords = [];
-    
-    for (const { topic, category } of WORD_TOPICS) {
-      // Fetch words related to the topic from Datamuse API
-      const url = getDatamuseUrl(topic);
-      console.log(`Fetching words for topic "${topic}" (${category}):`, url);
-      const response = await fetch(url);
-      
-      if (response.ok) {
-        const words = await response.json();
-        console.log(`Got ${words.length} words for topic "${topic}"`);
-        // Filter out multi-word phrases (only keep single words)
-        words.forEach(w => {
-          if (!w.word.includes(' ') && !w.word.includes('-')) {
-            // Extract frequency from tags if available (format: "f:##.##")
-            let frequency = null;
-            if (w.tags) {
-              const freqTag = w.tags.find(tag => tag.startsWith('f:'));
-              if (freqTag) {
-                frequency = parseFloat(freqTag.split(':')[1]);
-              }
-            }
-            // Calculate difficulty based on frequency and word length
-            const difficulty = calculateDifficulty(frequency, w.word.length);
-            allWords.push({ word: w.word, category, difficulty });
-          }
-        });
-      } else {
-        console.error(`Failed to fetch words for topic "${topic}": ${response.status}`);
-      }
-    }
-    
-    console.log(`Total words fetched: ${allWords.length}`);
-    
-    // If API fails or returns no words, return fallback list
-    if (allWords.length === 0) {
-      console.warn('No words fetched from API, using fallback list');
-      return getFallbackWordsList();
-    }
-    
-    return allWords;
-  } catch (error) {
-    console.error('Error fetching vocabulary from Datamuse:', error);
-    console.warn('Using fallback words list');
-    return getFallbackWordsList();
-  }
-};
+import { TRACKS, getTrackById } from '../config/tracks';
 
-// Calculate word difficulty based on frequency score and word length
-const calculateDifficulty = (frequency, wordLength) => {
-  // Datamuse frequency tag (f:) ranges from ~0-100
-  // Higher frequency = more common = easier
-  
-  // Primary: Use frequency if available
-  if (frequency !== null && frequency !== undefined) {
-    if (frequency >= 30) return 'Beginner';      // Very common words
-    if (frequency >= 15) return 'Intermediate';  // Moderately common
-    return 'Advanced';                           // Rare words
-  }
-  
-  // Fallback: Use word length
-  if (wordLength <= 6) return 'Beginner';
-  if (wordLength <= 10) return 'Intermediate';
-  return 'Advanced';
-};
+const capitalise = (w) => w.charAt(0).toUpperCase() + w.slice(1);
 
-// Fallback word list in case API fails
-const getFallbackWordsList = () => [
-  { word: 'synergy', category: 'Meetings', difficulty: 'Intermediate' },
-  { word: 'leverage', category: 'Leadership', difficulty: 'Intermediate' },
-  { word: 'paradigm', category: 'Presentations', difficulty: 'Advanced' },
-  { word: 'actionable', category: 'Meetings', difficulty: 'Advanced' },
-  { word: 'bandwidth', category: 'Collaboration', difficulty: 'Advanced' },
-  { word: 'stakeholder', category: 'Leadership', difficulty: 'Advanced' },
-  { word: 'proactive', category: 'Leadership', difficulty: 'Advanced' },
-  { word: 'deliverable', category: 'Collaboration', difficulty: 'Advanced' },
-  { word: 'facilitate', category: 'Meetings', difficulty: 'Advanced' },
-  { word: 'consensus', category: 'Meetings', difficulty: 'Advanced' },
-  { word: 'initiative', category: 'Leadership', difficulty: 'Advanced' },
-  { word: 'optimize', category: 'Leadership', difficulty: 'Intermediate' },
-  { word: 'collaborate', category: 'Collaboration', difficulty: 'Advanced' },
-  { word: 'delegate', category: 'Leadership', difficulty: 'Intermediate' },
-  { word: 'empower', category: 'Leadership', difficulty: 'Intermediate' },
-];
-
-// Cache for workplace words (loaded once per session)
-let cachedWordsList = null;
-
-// Get or fetch workplace words list
-const getWorkplaceWordsList = async () => {
-  if (cachedWordsList) {
-    return cachedWordsList;
-  }
-  
-  cachedWordsList = await fetchWorkplaceVocabulary();
-  return cachedWordsList;
-};
-
-// Generate workplace-specific examples from API data
-const generateWorkplaceExamples = (word, definition, partOfSpeech, apiExamples = []) => {
-  const lowerWord = word.toLowerCase();
-  const capitalizedWord = word.charAt(0).toUpperCase() + word.slice(1);
-  
-  // If we have multiple API examples, distribute them across contexts
-  if (apiExamples.length >= 3) {
+// Build Email / Chat / Speaking examples for the workplace track from templates.
+const buildWorkplaceExamples = (word, meaning, partOfSpeech) => {
+  const lower = word.toLowerCase();
+  if (partOfSpeech === 'verb') {
     return {
-      email: `Dear team, ${apiExamples[0]}`,
-      chat: apiExamples[1],
-      speaking: `In today's discussion, I want to emphasize that ${apiExamples[2]}`,
-    };
-  } else if (apiExamples.length === 2) {
-    return {
-      email: `Regarding our project, ${apiExamples[0]}`,
-      chat: apiExamples[1],
-      speaking: `Let me clarify: ${apiExamples[0]} This is crucial for our success.`,
-    };
-  } else if (apiExamples.length === 1) {
-    const example = apiExamples[0];
-    return {
-      email: `I wanted to share that ${example}`,
-      chat: `FYI: ${example}`,
-      speaking: `As I mentioned in the meeting, ${example}`,
+      email: `Hi team, I suggest we ${lower} this in the next sprint so we stay on track. Happy to discuss.`,
+      chat: `Can we ${lower} this before Friday? 🙌`,
+      speaking: `Moving forward, I'd like us to ${lower} this more consistently — it directly supports our goals.`,
     };
   }
-  
-  // Generate unique contextual examples for each communication type
-  let emailExample, chatExample, speakingExample;
-  
   if (partOfSpeech === 'noun') {
-    emailExample = `Dear team, I'd like to schedule a meeting to discuss the ${lowerWord} for our Q2 project. Please review the attached document before our discussion.`;
-    chatExample = `The ${lowerWord} for this initiative is looking great! 🎯`;
-    speakingExample = `In my presentation today, I want to emphasize the critical role that ${lowerWord} plays in our strategic objectives. ${definition}`;
-  } else if (partOfSpeech === 'verb') {
-    emailExample = `I recommend that we ${lowerWord} our current approach to align with the new market requirements. This will help us stay competitive.`;
-    chatExample = `Can we ${lowerWord} this by Friday? Need it for the client demo.`;
-    speakingExample = `Moving forward, our team needs to ${lowerWord} these processes more efficiently. This will be key to achieving our quarterly targets.`;
-  } else if (partOfSpeech === 'adjective') {
-    emailExample = `This represents a ${lowerWord} opportunity for our organization to demonstrate leadership in the industry.`;
-    chatExample = `That's such a ${lowerWord} approach! Really impressed. 👏`;
-    speakingExample = `We are pursuing a ${lowerWord} strategy that will differentiate us from competitors and drive sustainable growth.`;
-  } else {
-    // Default for other parts of speech
-    emailExample = `I wanted to follow up on our discussion about ${lowerWord}. Could we schedule some time to explore this further?`;
-    chatExample = `Quick question about ${lowerWord} - do you have a moment to chat?`;
-    speakingExample = `${capitalizedWord} is an essential consideration as we move forward with our implementation plan.`;
+    return {
+      email: `Hi team, I'd like to align on the ${lower} before we proceed. Could we set up 15 minutes?`,
+      chat: `Quick one — what's our ${lower} on this? 👀`,
+      speaking: `In today's update, I want to highlight the ${lower}, as it shapes our priorities this quarter.`,
+    };
   }
-  
+  // adjective / default
   return {
-    email: emailExample,
-    chat: chatExample,
-    speaking: speakingExample,
+    email: `Hi team, this is a ${lower} opportunity for us. I've shared the details for your review.`,
+    chat: `That's a really ${lower} approach — nice one! 👏`,
+    speaking: `We're taking a ${lower} stance here, and I believe it sets us up well for the months ahead.`,
   };
 };
 
-// Fetch word definition from Free Dictionary API
-export const fetchWordDefinition = async (word) => {
-  try {
-    console.log('Fetching definition for word:', word);
-    const url = getFreeDictionaryUrl(word);
-    console.log('API URL:', url);
-    
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      console.error(`API returned ${response.status} for word:`, word);
-      throw new Error(`Word not found: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    console.log('API response data:', data);
-    const wordData = data[0];
-    
-    if (!wordData || !wordData.meanings || wordData.meanings.length === 0) {
-      console.error('Invalid word data structure:', wordData);
-      throw new Error('Invalid word data received from API');
-    }
-    
-    // Get first meaning
-    const firstMeaning = wordData.meanings[0];
-    
-    if (!firstMeaning.definitions || firstMeaning.definitions.length === 0) {
-      console.error('No definitions found for word');
-      throw new Error('No definitions available');
-    }
-    
-    const firstDefinition = firstMeaning.definitions[0];
-    
-    // Collect all examples from API
-    const apiExamples = [];
-    wordData.meanings.forEach(meaning => {
-      meaning.definitions.forEach(def => {
-        if (def.example) {
-          apiExamples.push(def.example);
-        }
-      });
-    });
-    
-    // Generate workplace-specific examples using API data
-    const examples = generateWorkplaceExamples(
-      wordData.word, 
-      firstDefinition.definition,
-      firstMeaning.partOfSpeech,
-      apiExamples
-    );
-    
-    // Extract pronunciation, handling various possible structures
-    let pronunciation = '';
-    if (wordData.phonetic) {
-      pronunciation = wordData.phonetic;
-    } else if (wordData.phonetics && wordData.phonetics.length > 0) {
-      // Find the first phonetic with text
-      const phoneticWithText = wordData.phonetics.find(p => p.text);
-      pronunciation = phoneticWithText ? phoneticWithText.text : '';
-    }
-    
-    // Remove slashes from pronunciation if present
-    pronunciation = pronunciation.replace(/^\/|\/$/g, '');
-    
-    return {
-      word: wordData.word.charAt(0).toUpperCase() + wordData.word.slice(1),
-      pronunciation: pronunciation || 'pronunciation not available',
-      partOfSpeech: firstMeaning.partOfSpeech,
-      meaning: firstDefinition.definition,
-      synonyms: firstMeaning.synonyms?.slice(0, 5) || [],
-      examples: examples,
-      allMeanings: wordData.meanings,
+// Turn a raw curated entry into the display object the UI expects.
+const buildDisplayWord = (track, entry) => {
+  const base = {
+    word: capitalise(entry.word),
+    partOfSpeech: entry.partOfSpeech,
+    pronunciation: '',
+    meaning: entry.meaning,
+    synonyms: entry.synonyms || [],
+    antonyms: entry.antonyms || [],
+    sentence: entry.sentence,
+    category: track.name,
+    trackId: track.id,
+    trackColor: track.color,
+    exampleFormat: track.exampleFormat,
+  };
+
+  if (track.exampleFormat === 'workplace') {
+    base.examples = buildWorkplaceExamples(entry.word, entry.meaning, entry.partOfSpeech);
+  } else {
+    base.examples = {
+      sentence: entry.sentence,
+      synonyms: (entry.synonyms || []).join(', '),
+      antonyms: (entry.antonyms || []).join(', '),
     };
-  } catch (error) {
-    console.error('Error fetching word definition:', error);
-    return null;
   }
+  return base;
 };
 
-// Get word for a specific day (consistent word per day)
-export const getWordOfTheDay = async () => {
-  try {
-    // Get dynamic word list
-    const workplaceWordsList = await getWorkplaceWordsList();
-    
-    if (!workplaceWordsList || workplaceWordsList.length === 0) {
-      console.error('No words available in the list');
-      throw new Error('No words available');
-    }
-    
-    // Use current date to determine which word to show
-    const today = new Date();
-    const startOfYear = new Date(today.getFullYear(), 0, 1);
-    const dayOfYear = Math.floor((today - startOfYear) / (1000 * 60 * 60 * 24));
-    
-    const wordIndex = dayOfYear % workplaceWordsList.length;
-    const wordEntry = workplaceWordsList[wordIndex];
-    
-    console.log('Selected word entry:', wordEntry);
-    
-    // Try to fetch definition from API, with fallback attempts
-    let wordData = null;
-    let attempts = 0;
-    const maxAttempts = 5;
-    
-    while (!wordData && attempts < maxAttempts) {
-      const currentIndex = (wordIndex + attempts) % workplaceWordsList.length;
-      const currentWordEntry = workplaceWordsList[currentIndex];
-      
-      console.log(`Attempt ${attempts + 1}: Trying word "${currentWordEntry.word}"`);
-      wordData = await fetchWordDefinition(currentWordEntry.word);
-      
-      if (wordData) {
-        console.log('Successfully fetched word data');
-        return {
-          ...wordData,
-          category: currentWordEntry.category,
-          date: today.toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-          }),
-        };
-      }
-      
-      attempts++;
-    }
-    
-    // If all attempts fail, throw error
-    console.error('Failed to fetch definition after multiple attempts');
-    throw new Error('Failed to fetch word data after multiple attempts');
-  } catch (error) {
-    console.error('Error getting word of the day:', error);
-    throw error;
-  }
+// Deterministic "word of the day" index based on the calendar day.
+const dayIndex = (length) => {
+  const today = new Date();
+  const startOfYear = new Date(today.getFullYear(), 0, 1);
+  const dayOfYear = Math.floor((today - startOfYear) / (1000 * 60 * 60 * 24));
+  return dayOfYear % length;
 };
 
-// Get all words by category
-export const getWordsByCategory = async (category) => {
-  const workplaceWordsList = await getWorkplaceWordsList();
-  const wordsInCategory = workplaceWordsList.filter(w => w.category === category);
-  
-  // Fetch definitions for all words in category
-  const wordPromises = wordsInCategory.map(async (w) => {
-    const data = await fetchWordDefinition(w.word);
-    return data ? { ...data, category: w.category } : null;
+export const getFormattedDate = () =>
+  new Date().toLocaleDateString('en-GB', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   });
-  
-  const words = await Promise.all(wordPromises);
-  return words.filter(w => w !== null);
+
+// Track metadata + word counts (for the Browse / Home pages).
+// The primary track (11+) is always returned first.
+export const getAllTracks = () =>
+  TRACKS.map((t) => ({
+    id: t.id,
+    name: t.name,
+    short: t.short,
+    audience: t.audience,
+    tagline: t.tagline,
+    icon: t.icon,
+    color: t.color,
+    exampleFormat: t.exampleFormat,
+    wordCount: t.words.length,
+    primary: Boolean(t.primary),
+    comingSoon: Boolean(t.comingSoon),
+  })).sort((a, b) => (b.primary ? 1 : 0) - (a.primary ? 1 : 0));
+
+// The lead track (11+) — used for the hero / featured word.
+export const getPrimaryTrack = () => getAllTracks().find((t) => t.primary) || getAllTracks()[0];
+
+// Today's word for a single track.
+export const getWordOfTheDay = (trackId) => {
+  const track = getTrackById(trackId);
+  if (!track || track.words.length === 0) return null;
+  const entry = track.words[dayIndex(track.words.length)];
+  return { ...buildDisplayWord(track, entry), date: getFormattedDate() };
 };
 
-// Get all categories
-export const getAllCategories = async () => {
-  const workplaceWordsList = await getWorkplaceWordsList();
-  const categories = [...new Set(workplaceWordsList.map(word => word.category))];
-  return categories;
+// Today's word for every track (primary track first).
+export const getDailyWordsForAllTracks = () =>
+  TRACKS.map((track) => ({
+    track: {
+      id: track.id,
+      name: track.name,
+      short: track.short,
+      tagline: track.tagline,
+      icon: track.icon,
+      color: track.color,
+      primary: Boolean(track.primary),
+      comingSoon: Boolean(track.comingSoon),
+    },
+    word: getWordOfTheDay(track.id),
+  })).sort((a, b) => (b.track.primary ? 1 : 0) - (a.track.primary ? 1 : 0));
+
+// Word list for a track, with full detail so the browse list can expand inline.
+export const getTrackWords = (trackId) => {
+  const track = getTrackById(trackId);
+  if (!track) return [];
+  return track.words.map((entry) => ({
+    word: capitalise(entry.word),
+    partOfSpeech: entry.partOfSpeech,
+    meaning: entry.meaning,
+    synonyms: entry.synonyms || [],
+    antonyms: entry.antonyms || [],
+    sentence: entry.sentence,
+  }));
 };
 
-// Get random word
-export const getRandomWord = async () => {
-  const workplaceWordsList = await getWorkplaceWordsList();
-  const randomIndex = Math.floor(Math.random() * workplaceWordsList.length);
-  const wordEntry = workplaceWordsList[randomIndex];
-  const wordData = await fetchWordDefinition(wordEntry.word);
-  return wordData ? { ...wordData, category: wordEntry.category } : null;
-};
-
-// Get all words (fetches definitions from API)
-export const getAllWords = async () => {
-  const workplaceWordsList = await getWorkplaceWordsList();
-  const wordPromises = workplaceWordsList.map(async (w) => {
-    const data = await fetchWordDefinition(w.word);
-    return data ? { ...data, category: w.category } : null;
-  });
-  
-  const words = await Promise.all(wordPromises);
-  return words.filter(w => w !== null);
-};
-
-// Get simple word list (just names and categories, no API calls)
-export const getWordsList = async () => {
-  return await getWorkplaceWordsList();
+// Full detail for one word in a track (for the dialog).
+export const getWordDetail = (trackId, word) => {
+  const track = getTrackById(trackId);
+  if (!track) return null;
+  const entry = track.words.find(
+    (e) => e.word.toLowerCase() === word.toLowerCase()
+  );
+  return entry ? buildDisplayWord(track, entry) : null;
 };
 
 export default {
+  getAllTracks,
   getWordOfTheDay,
-  fetchWordDefinition,
-  getWordsByCategory,
-  getAllCategories,
-  getRandomWord,
-  getAllWords,
-  getWordsList,
+  getDailyWordsForAllTracks,
+  getTrackWords,
+  getWordDetail,
+  getFormattedDate,
 };

@@ -1,141 +1,90 @@
-# WordAtWork - Workplace Vocabulary Tool
+# Lexigrove — One Word a Day for Every Learner
 
-A daily vocabulary tool designed for busy professionals to improve workplace communication. Built with React, Material-UI, and Vite.
+A daily vocabulary portal with **multiple tracks** for different kinds of learners — working professionals, 11+ exam students, and English-prep students and adults. One engine, one daily-word habit, content tailored per audience. Built with React, Material-UI, and Vite.
+
+## Tracks
+
+The portal shows all tracks side-by-side; users pick whichever matches their goal:
+
+| Track | For | Example format |
+|---|---|---|
+| **Working Professional** | Professionals at work | Email / Chat / Speaking |
+| **11+ Exam** | Children preparing for the 11+ | In a Sentence / Synonyms / Antonyms |
+| **English Prep · Students** | Students improving their English | In a Sentence / Synonyms / Antonyms |
+| **English Prep · Professionals** | Adults strengthening their English | In a Sentence / Synonyms / Antonyms |
+
+Each word includes its meaning, part of speech, synonyms, antonyms, and a track-appropriate example.
 
 ## Features
 
-- **Word of the Day**: Get a new workplace vocabulary word daily with practical examples
-- **Categories**: Explore words organized by context (Meetings, Presentations, Leadership, Emails, etc.)
-- **Learning History**: Track your vocabulary learning progress over time
-- **Ready-to-Use Examples**: Each word includes usage examples for emails, chats, and speaking
-- **Responsive Design**: Works seamlessly on desktop and mobile devices
+- **Word of the Day** — today's word for every track, side-by-side
+- **Browse by Track** — explore each track's full word list and word details
+- **Synonyms & Antonyms** — word families the way exams test them
+- **Pronunciation** — built-in speech synthesis for every word
+- **Responsive** — works on desktop and mobile
+
+## Content
+
+All vocabulary is curated in [src/config/tracks.js](src/config/tracks.js) — the app is fully self-contained and works offline (no third-party word API). To add words, append entries to any track's `words` array:
+
+```js
+{
+  word: 'example',
+  partOfSpeech: 'noun',
+  meaning: 'a thing that illustrates a rule.',
+  synonyms: ['instance', 'sample', 'illustration'],
+  antonyms: ['exception'],
+  sentence: 'This is an example sentence.',
+}
+```
+
+To add a whole new track, add a new object to the `TRACKS` array (with an `exampleFormat` of `'workplace'` or `'exam'`).
+
+## Branding
+
+The app name lives in one place — [src/config/brand.js](src/config/brand.js). Change `APP_NAME` to rebrand the entire UI.
 
 ## Tech Stack
 
-- **React 19** - UI library
-- **Vite 5** - Build tool and dev server
-- **Material-UI (MUI)** - Component library and styling
-- **React Router** - Client-side routing
-- **Emotion** - CSS-in-JS styling
+- **React 19**, **Vite 5**, **Material-UI (MUI)**, **React Router**, **Emotion**
 
 ## Getting Started
 
-### Prerequisites
-
-- Node.js 20.11 or higher
-- npm 10.x or higher
-
-### Installation
-
-1. Clone or navigate to the project directory
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-### Development
-
-Start the development server:
-
 ```bash
-npm run dev
-```
-
-The application will be available at [http://localhost:5173](http://localhost:5173)
-
-### Build
-
-Create a production build:
-
-```bash
-npm run build
-```
-
-The built files will be in the `dist` directory.
-
-### Preview Production Build
-
-Preview the production build locally:
-
-```bash
-npm run preview
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # production build to dist/
+npm run preview  # preview the build
 ```
 
 ## Project Structure
 
 ```
-WordAtWork/
-├── src/
-│   ├── components/
-│   │   └── Layout.jsx          # Main layout with navigation
-│   ├── pages/
-│   │   ├── Home.jsx            # Landing page
-│   │   ├── WordOfTheDay.jsx    # Daily word display
-│   │   ├── Categories.jsx      # Category browser
-│   │   └── History.jsx         # Learning history tracker
-│   ├── App.jsx                 # Main app component with routing
-│   ├── main.jsx                # Application entry point
-│   └── index.css               # Global styles
-├── public/                     # Static assets
-├── index.html                  # HTML template
-├── vite.config.js             # Vite configuration
-└── package.json               # Dependencies and scripts
+src/
+├── config/
+│   ├── brand.js          # App name + taglines (single source of truth)
+│   └── tracks.js         # All tracks and their curated word lists
+├── components/
+│   ├── Layout.jsx        # Navigation + footer
+│   └── TrackIcon.jsx     # Maps a track's icon name to a MUI icon
+├── pages/
+│   ├── Home.jsx          # Landing page with track cards
+│   ├── WordOfTheDay.jsx  # Today's word for every track, side-by-side
+│   ├── Categories.jsx    # Browse by track
+│   ├── About.jsx / Contact.jsx / PrivacyPolicy.jsx / TermsOfService.jsx
+├── services/
+│   └── wordService.js    # Track-based vocabulary logic (curated, offline)
+└── App.jsx               # Routing
 ```
 
-## Available Scripts
+## Roadmap (commercialisation)
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-
-## Features Overview
-
-### Home Page
-- Introduction to WordAtWork
-- Quick access to all features
-- Benefits overview
-
-### Word of the Day
-- Daily vocabulary word with pronunciation
-- Detailed meaning and synonyms
-- Context-specific usage examples (Email, Chat, Speaking)
-- Category tagging
-
-### Categories
-- Browse words by workplace context:
-  - Meetings
-  - Presentations
-  - Leadership
-  - Emails
-  - Business Strategy
-  - General Professional
-
-### Learning History
-- Track all learned words
-- Search functionality
-- Progress statistics
-- Learning success rate
-
-## Future Enhancements
-
-- Integration with WhatsApp/Telegram/Email for daily delivery
-- User authentication and personalized learning
-- API integration for dynamic word content
-- Spaced repetition for better retention
-- Quiz and practice features
-- Export learning history
-- Dark mode support
-- Multi-language support
-
-## Contributing
-
-This is a proof-of-concept project. For suggestions or improvements, please open an issue or submit a pull request.
+- Daily **email delivery** per track (the habit that drives retention)
+- User accounts + **subscription** (Stripe / Razorpay), gating premium features
+- **Spaced repetition** and quizzes
+- Progress tracking and streaks
+- Expanded, exam-aligned word banks per track
 
 ## License
 
-This project is open source and available for educational purposes.
-
----
-
-Built with ❤️ for professionals looking to enhance their workplace communication skills.
+Proof-of-concept project for educational use.

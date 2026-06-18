@@ -3,12 +3,13 @@ import EmailIcon from '@mui/icons-material/Email';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import TwitterIcon from '@mui/icons-material/Twitter';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import { BRAND_GRADIENT } from '../config/brand';
 
 function Contact() {
   const handleSubmit = (e) => {
     e.preventDefault();
     // For MVP, you can use a service like Formspree, EmailJS, or just mailto
-    alert('Thank you for your message! For now, please email us directly at: contact@wordatwork.com');
+    alert('Thank you for your message! For now, please email us directly at: contact@lexigrove.com');
   };
 
   return (
@@ -19,8 +20,8 @@ function Contact() {
           sx={{ 
             mb: 6,
             p: 5,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            borderRadius: 3,
+            background: BRAND_GRADIENT,
+            borderRadius: '10px',
             color: 'white',
             textAlign: 'center',
           }}
