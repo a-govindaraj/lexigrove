@@ -15,7 +15,7 @@ export default defineConfig({
       }
     }
   ],
-  base: '/wordatwork/', // Match exact repo name (case-sensitive)
+  base: '/lexigrove/', // Match exact repo name (case-sensitive)
   build: {
     outDir: 'docs' // Output to docs folder for GitHub Pages
   }
